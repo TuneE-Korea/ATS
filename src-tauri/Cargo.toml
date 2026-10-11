@@ -15,6 +15,8 @@ tauri-build = { version = "2", features = [] }
 ats-core = { path = "../crates/ats-core" }
 tauri = { version = "2", features = ["tray-icon", "image-png"] }
 tauri-plugin-global-shortcut = "2"
+# 두 번째 실행은 새로 뜨지 않고 기존 창을 앞으로 가져온다 (포트 47120 충돌 방지)
+tauri-plugin-single-instance = "2"
 enigo = "0.6"
 arboard = "3"
 serde.workspace = true
