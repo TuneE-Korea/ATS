@@ -28,4 +28,6 @@ uuid = { version = "1", features = ["v4"] }
 # API 키 보관: Windows 자격 증명 관리자
 keyring = { version = "3", features = ["windows-native"] }
 # 활성 창의 프로세스 이름과 제목 조회
-windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_System_Threading"] }
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Graphics_Gdi", "Win32_UI_WindowsAndMessaging", "Win32_System_Threading"] }
+# 데스크톱 앱 입력창 읽기: UI Automation (COM)
+windows = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Com", "Win32_UI_Accessibility"] }

@@ -14,7 +14,7 @@ pub enum TranslationMode {
     /// 단축키를 누르면 입력창 전체를 번역해서 치환한다.
     #[default]
     Hotkey,
-    /// 단축키에 더해, 브라우저 확장이 입력 중 번역 미리보기를 띄운다.
+    /// 단축키에 더해, 입력 중 번역 미리보기를 띄운다 (브라우저 확장, 켜 두면 데스크톱 앱도).
     Realtime,
 }
 
@@ -30,6 +30,10 @@ pub struct Settings {
     pub only_translate_korean: bool,
     /// 브라우저 확장의 실시간 미리보기가 입력을 멈춘 뒤 기다리는 시간.
     pub realtime_debounce_ms: u32,
+    /// 데스크톱 앱(Discord, Slack 등)에서도 실시간 미리보기를 띄울지. 실험 기능이라 기본은 끔.
+    pub desktop_realtime: bool,
+    /// 데스크톱 실시간 미리보기를 켤 앱의 실행 파일 이름. 대소문자 무시.
+    pub desktop_realtime_apps: Vec<String>,
     /// 공급자 시도 순서. 앞의 공급자가 한도 초과 등으로 실패하면 다음 공급자로 넘어간다.
     pub provider_order: Vec<ProviderId>,
     /// 앱/창별 목표 언어. 위에서부터 처음 일치하는 프로필을 쓴다.
@@ -48,6 +52,8 @@ impl Default for Settings {
             mode: TranslationMode::Hotkey,
             only_translate_korean: true,
             realtime_debounce_ms: 600,
+            desktop_realtime: false,
+            desktop_realtime_apps: ["Discord.exe", "slack.exe", "KakaoTalk.exe", "Telegram.exe", "LINE.exe"].map(String::from).to_vec(),
             provider_order: vec![ProviderId::Deepl, ProviderId::Azure],
             profiles: Vec::new(),
             legacy_deepl_api_key: None,
@@ -71,6 +77,14 @@ impl Settings {
         }
         let raw = serde_json::to_string_pretty(self).map_err(io::Error::other)?;
         fs::write(path, raw)
+    }
+
+    /// 이 프로세스에서 데스크톱 실시간 미리보기를 띄울지.
+    pub fn desktop_preview_enabled_for(&self, process: &str) -> bool {
+        self.mode == TranslationMode::Realtime
+            && self.desktop_realtime
+            && !process.is_empty()
+            && self.desktop_realtime_apps.iter().any(|app| app.trim().eq_ignore_ascii_case(process))
     }
 
     /// 예전 평문 키를 꺼낸다. 호출한 쪽이 비밀 저장소에 옮긴 뒤 `save`하면 파일에서 사라진다.
@@ -125,5 +139,17 @@ mod tests {
         s.save(&path).unwrap();
 
         assert!(!fs::read_to_string(&path).unwrap().contains("old:fx"));
+    }
+
+    #[test]
+    fn desktop_preview_needs_realtime_toggle_and_listed_app() {
+        let mut s = Settings { desktop_realtime: true, ..Settings::default() };
+        assert!(!s.desktop_preview_enabled_for("Discord.exe"), "hotkey mode");
+        s.mode = TranslationMode::Realtime;
+        assert!(s.desktop_preview_enabled_for("discord.EXE"));
+        assert!(!s.desktop_preview_enabled_for("chrome.exe"));
+        assert!(!s.desktop_preview_enabled_for(""));
+        s.desktop_realtime = false;
+        assert!(!s.desktop_preview_enabled_for("Discord.exe"));
     }
 }

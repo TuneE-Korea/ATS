@@ -9,6 +9,8 @@ const base: Config = {
     mode: "hotkey",
     onlyTranslateKorean: true,
     realtimeDebounceMs: 600,
+    desktopRealtime: false,
+    desktopRealtimeApps: ["Discord.exe", "slack.exe"],
     providerOrder: ["deepl", "azure"],
     profiles: [],
   },
@@ -43,5 +45,19 @@ describe("profile editing", () => {
     useConfig.getState().removeProfile(0);
     expect(names()).toEqual(["A:FR"]);
     expect(useConfig.getState().saved!.settings.profiles).toEqual([]);
+  });
+});
+
+describe("enableDesktopPreview", () => {
+  beforeEach(() => useConfig.setState({ saved: base, draft: structuredClone(base) }));
+
+  it("turns on realtime + desktop preview and adds the app once", () => {
+    useConfig.getState().enableDesktopPreview("KakaoTalk.exe");
+    useConfig.getState().enableDesktopPreview("kakaotalk.exe");
+    const s = useConfig.getState().draft!.settings;
+    expect(s.mode).toBe("realtime");
+    expect(s.desktopRealtime).toBe(true);
+    expect(s.desktopRealtimeApps).toEqual(["Discord.exe", "slack.exe", "KakaoTalk.exe"]);
+    expect(useConfig.getState().saved!.settings.desktopRealtime).toBe(false);
   });
 });

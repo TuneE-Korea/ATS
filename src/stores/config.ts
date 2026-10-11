@@ -1,3 +1,4 @@
+import { withApp } from "../lib/apps";
 import { create } from "zustand";
 import { errorMessage, ipc } from "../lib/ipc";
 import { move } from "../lib/profiles";
@@ -14,6 +15,8 @@ interface ConfigState {
   editSettings: (patch: Partial<Settings>) => void;
   editSecrets: (patch: Partial<Secrets>) => void;
   addProfile: (profile: Profile) => void;
+  /** 이 앱에서 데스크톱 미리보기를 쓰도록 목록에 넣고, 꺼져 있던 실시간 미리보기도 켠다. */
+  enableDesktopPreview: (process: string) => void;
   updateProfile: (index: number, patch: Partial<Profile>) => void;
   removeProfile: (index: number) => void;
   moveProfile: (index: number, dir: -1 | 1) => void;
@@ -55,6 +58,15 @@ export const useConfig = create<ConfigState>((set, get) => {
     },
 
     addProfile: (profile) => setProfiles((ps) => [...ps, profile]),
+    enableDesktopPreview: (process) => {
+      const settings = get().draft?.settings;
+      if (!settings) return;
+      get().editSettings({
+        mode: "realtime",
+        desktopRealtime: true,
+        desktopRealtimeApps: withApp(settings.desktopRealtimeApps, process),
+      });
+    },
     updateProfile: (index, patch) => setProfiles((ps) => ps.map((p, i) => (i === index ? { ...p, ...patch } : p))),
     removeProfile: (index) => setProfiles((ps) => ps.filter((_, i) => i !== index)),
     moveProfile: (index, dir) => setProfiles((ps) => move(ps, index, dir)),

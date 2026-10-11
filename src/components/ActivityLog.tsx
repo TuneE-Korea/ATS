@@ -4,6 +4,8 @@ import { PROVIDER_LABEL, type PipelineEvent } from "../lib/types";
 import { useConfig } from "../stores/config";
 import { Section } from "./Section";
 
+const NO_APPS: string[] = [];
+
 export interface LoggedEvent {
   at: Date;
   event: PipelineEvent;
@@ -11,6 +13,10 @@ export interface LoggedEvent {
 
 export function ActivityLog({ items }: { items: LoggedEvent[] }) {
   const addProfile = useConfig((s) => s.addProfile);
+  const enableDesktopPreview = useConfig((s) => s.enableDesktopPreview);
+  // 설정을 읽기 전에는 빈 목록. 매번 새 []를 돌려주면 Zustand가 값이 바뀐 줄 알고 무한히 다시 그린다.
+  const desktopApps = useConfig((s) => s.draft?.settings.desktopRealtimeApps ?? NO_APPS);
+  const isDesktopApp = (process: string) => desktopApps.some((a) => a.toLowerCase() === process.toLowerCase());
   const defaultLang = useConfig((s) => s.draft?.settings.targetLang ?? "EN-US");
 
   return (
@@ -25,12 +31,22 @@ export function ActivityLog({ items }: { items: LoggedEvent[] }) {
                 <span>{at.toLocaleTimeString()}</span>
                 <span className="truncate">{event.window.process || "알 수 없는 앱"}</span>
                 {event.window.process && (
-                  <button
-                    className="ml-auto shrink-0 text-indigo-600 hover:underline"
-                    onClick={() => addProfile(profileFromWindow(event.window.process, defaultLang))}
-                  >
-                    이 앱으로 프로필 만들기
-                  </button>
+                  <span className="ml-auto flex shrink-0 gap-3">
+                    {!isDesktopApp(event.window.process) && (
+                      <button
+                        className="text-indigo-600 hover:underline"
+                        onClick={() => enableDesktopPreview(event.window.process)}
+                      >
+                        이 앱에서 미리보기
+                      </button>
+                    )}
+                    <button
+                      className="text-indigo-600 hover:underline"
+                      onClick={() => addProfile(profileFromWindow(event.window.process, defaultLang))}
+                    >
+                      이 앱으로 프로필 만들기
+                    </button>
+                  </span>
                 )}
               </div>
               <Body event={event} />

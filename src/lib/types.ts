@@ -22,6 +22,10 @@ export interface Settings {
   mode: TranslationMode;
   onlyTranslateKorean: boolean;
   realtimeDebounceMs: number;
+  /** 데스크톱 앱 실시간 미리보기 (실험). */
+  desktopRealtime: boolean;
+  /** 데스크톱 미리보기를 켤 실행 파일 이름. */
+  desktopRealtimeApps: string[];
   providerOrder: ProviderId[];
   profiles: Profile[];
 }
@@ -77,5 +81,11 @@ export type PipelineEvent =
     }
   | { kind: "skipped"; reason: string; window: ActiveWindow }
   | { kind: "failed"; message: string; window: ActiveWindow };
+
+/** 데스크톱 미리보기 창 내용 (src-tauri/src/desktop_preview.rs PreviewPayload). */
+export type PreviewPayload =
+  | { kind: "loading" }
+  | { kind: "result"; text: string; provider: ProviderId; profile: string | null }
+  | { kind: "error"; message: string };
 
 export const PROVIDER_LABEL: Record<ProviderId, string> = { deepl: "DeepL", azure: "Azure" };

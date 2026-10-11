@@ -1,7 +1,7 @@
 // Tauri 커맨드 호출을 한 곳에 모은다. 컴포넌트는 invoke 문자열을 직접 쓰지 않는다.
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import type { Config, PipelineEvent, ServerInfo, TranslateResponse, Usage } from "./types";
+import type { Config, PipelineEvent, PreviewPayload, ServerInfo, TranslateResponse, Usage } from "./types";
 
 export const ipc = {
   getConfig: () => invoke<Config>("get_config"),
@@ -10,10 +10,15 @@ export const ipc = {
   getUsage: () => invoke<Usage[]>("get_usage"),
   getServerInfo: () => invoke<ServerInfo>("get_server_info"),
   regeneratePairingToken: () => invoke<Config>("regenerate_pairing_token"),
+  previewLayout: (height: number) => invoke<void>("preview_layout", { height }),
 };
 
 export function onPipelineEvent(handler: (e: PipelineEvent) => void): Promise<UnlistenFn> {
   return listen<PipelineEvent>("ats://pipeline", (e) => handler(e.payload));
+}
+
+export function onPreviewEvent(handler: (p: PreviewPayload) => void): Promise<UnlistenFn> {
+  return listen<PreviewPayload>("ats://preview", (e) => handler(e.payload));
 }
 
 /** Rust 커맨드는 오류를 문자열로 reject한다. 그 외 예외도 화면용 문자열로 바꾼다. */

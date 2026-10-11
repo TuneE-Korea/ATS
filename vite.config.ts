@@ -6,6 +6,8 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   clearScreen: false,
+  // 설정 창(index.html)과 데스크톱 미리보기 창(preview.html) 두 페이지를 빌드한다.
+  build: { rollupOptions: { input: { main: "index.html", preview: "preview.html" } } },
   server: {
     port: 1420,
     strictPort: true,
