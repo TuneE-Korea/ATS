@@ -53,7 +53,7 @@ impl Default for Settings {
             only_translate_korean: true,
             realtime_debounce_ms: 600,
             desktop_realtime: false,
-            desktop_realtime_apps: vec!["Discord.exe".into(), "slack.exe".into()],
+            desktop_realtime_apps: ["Discord.exe", "slack.exe", "KakaoTalk.exe", "Telegram.exe", "LINE.exe"].map(String::from).to_vec(),
             provider_order: vec![ProviderId::Deepl, ProviderId::Azure],
             profiles: Vec::new(),
             legacy_deepl_api_key: None,

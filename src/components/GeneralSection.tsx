@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatAppList, parseAppList } from "../lib/apps";
 import { useConfig } from "../stores/config";
 import { LanguageSelect } from "./LanguageSelect";
@@ -60,7 +60,7 @@ export function GeneralSection() {
           {settings.desktopRealtime && (
             <Field
               label="미리보기를 띄울 앱"
-              hint="실행 파일 이름을 쉼표로 구분합니다. 입력창 아래에 미리보기가 뜨면 Tab으로 적용, Esc로 닫습니다."
+              hint="실행 파일 이름을 쉼표로 구분합니다. 아래 '최근 단축키 번역'의 '이 앱에서 미리보기' 버튼으로도 추가할 수 있습니다."
             >
               <AppListInput apps={settings.desktopRealtimeApps} onChange={(desktopRealtimeApps) => edit({ desktopRealtimeApps })} />
             </Field>
@@ -83,6 +83,10 @@ export function GeneralSection() {
 /** 입력 중에는 글자 그대로 두고, 칸을 벗어날 때 목록으로 정리한다 (쉼표를 치는 순간 지워지지 않게). */
 function AppListInput({ apps, onChange }: { apps: string[]; onChange: (apps: string[]) => void }) {
   const [text, setText] = useState(() => formatAppList(apps));
+  // "이 앱에서 미리보기" 버튼처럼 밖에서 목록이 바뀌면 칸에도 반영한다. 입력 중인 글과 같은 목록이면 그대로 둔다.
+  useEffect(() => {
+    setText((current) => (formatAppList(parseAppList(current)) === formatAppList(apps) ? current : formatAppList(apps)));
+  }, [apps]);
   return (
     <input
       className={inputClass}

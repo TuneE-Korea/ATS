@@ -11,6 +11,9 @@ export interface LoggedEvent {
 
 export function ActivityLog({ items }: { items: LoggedEvent[] }) {
   const addProfile = useConfig((s) => s.addProfile);
+  const enableDesktopPreview = useConfig((s) => s.enableDesktopPreview);
+  const desktopApps = useConfig((s) => s.draft?.settings.desktopRealtimeApps ?? []);
+  const isDesktopApp = (process: string) => desktopApps.some((a) => a.toLowerCase() === process.toLowerCase());
   const defaultLang = useConfig((s) => s.draft?.settings.targetLang ?? "EN-US");
 
   return (
@@ -25,12 +28,22 @@ export function ActivityLog({ items }: { items: LoggedEvent[] }) {
                 <span>{at.toLocaleTimeString()}</span>
                 <span className="truncate">{event.window.process || "알 수 없는 앱"}</span>
                 {event.window.process && (
-                  <button
-                    className="ml-auto shrink-0 text-indigo-600 hover:underline"
-                    onClick={() => addProfile(profileFromWindow(event.window.process, defaultLang))}
-                  >
-                    이 앱으로 프로필 만들기
-                  </button>
+                  <span className="ml-auto flex shrink-0 gap-3">
+                    {!isDesktopApp(event.window.process) && (
+                      <button
+                        className="text-indigo-600 hover:underline"
+                        onClick={() => enableDesktopPreview(event.window.process)}
+                      >
+                        이 앱에서 미리보기
+                      </button>
+                    )}
+                    <button
+                      className="text-indigo-600 hover:underline"
+                      onClick={() => addProfile(profileFromWindow(event.window.process, defaultLang))}
+                    >
+                      이 앱으로 프로필 만들기
+                    </button>
+                  </span>
                 )}
               </div>
               <Body event={event} />
