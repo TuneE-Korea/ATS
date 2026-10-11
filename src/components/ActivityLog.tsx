@@ -4,6 +4,8 @@ import { PROVIDER_LABEL, type PipelineEvent } from "../lib/types";
 import { useConfig } from "../stores/config";
 import { Section } from "./Section";
 
+const NO_APPS: string[] = [];
+
 export interface LoggedEvent {
   at: Date;
   event: PipelineEvent;
@@ -12,7 +14,8 @@ export interface LoggedEvent {
 export function ActivityLog({ items }: { items: LoggedEvent[] }) {
   const addProfile = useConfig((s) => s.addProfile);
   const enableDesktopPreview = useConfig((s) => s.enableDesktopPreview);
-  const desktopApps = useConfig((s) => s.draft?.settings.desktopRealtimeApps ?? []);
+  // 설정을 읽기 전에는 빈 목록. 매번 새 []를 돌려주면 Zustand가 값이 바뀐 줄 알고 무한히 다시 그린다.
+  const desktopApps = useConfig((s) => s.draft?.settings.desktopRealtimeApps ?? NO_APPS);
   const isDesktopApp = (process: string) => desktopApps.some((a) => a.toLowerCase() === process.toLowerCase());
   const defaultLang = useConfig((s) => s.draft?.settings.targetLang ?? "EN-US");
 
