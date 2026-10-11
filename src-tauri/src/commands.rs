@@ -2,7 +2,8 @@
 
 use crate::{
     hotkey,
-    state::{AppState, Config},
+    server::{ServerInfo, ServerInfoState},
+    state::{new_pairing_token, AppState, Config},
 };
 use ats_core::{TranslateRequest, TranslateResponse, TranslationProvider, Usage};
 use tauri::{AppHandle, State};
@@ -37,4 +38,18 @@ pub async fn translate_text(state: State<'_, AppState>, text: String) -> Result<
 #[tauri::command]
 pub async fn get_usage(state: State<'_, AppState>) -> Result<Vec<Usage>, String> {
     Ok(state.provider()?.usages().await)
+}
+
+#[tauri::command]
+pub fn get_server_info(info: State<'_, ServerInfoState>) -> ServerInfo {
+    info.0.lock().unwrap().clone()
+}
+
+/// 토큰이 유출됐다고 생각될 때 새로 만든다. 확장 옵션에 새 토큰을 다시 넣어야 한다.
+#[tauri::command]
+pub fn regenerate_pairing_token(state: State<'_, AppState>) -> Result<Config, String> {
+    let mut config = state.config();
+    config.secrets.pairing_token = new_pairing_token();
+    state.replace(config.clone())?;
+    Ok(config)
 }

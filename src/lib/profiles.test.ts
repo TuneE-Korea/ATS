@@ -22,5 +22,6 @@ describe("hasCondition", () => {
     const base = profileFromWindow("", "JA");
     expect(hasCondition(base)).toBe(false);
     expect(hasCondition({ ...base, titleContains: " reddit " })).toBe(true);
+    expect(hasCondition({ ...base, domain: "5ch.net" })).toBe(true);
   });
 });

@@ -6,6 +6,7 @@ export function profileFromWindow(process: string, targetLang: string): Profile 
     name: process.replace(/\.exe$/i, "") || "새 프로필",
     process,
     titleContains: "",
+    domain: "",
     targetLang,
     enabled: true,
   };
@@ -22,5 +23,5 @@ export function move<T>(items: readonly T[], i: number, dir: -1 | 1): T[] {
 
 /** 조건이 하나도 없으면 Rust 쪽에서 절대 일치하지 않는다. 화면에서 미리 경고한다. */
 export function hasCondition(p: Profile): boolean {
-  return p.process.trim() !== "" || p.titleContains.trim() !== "";
+  return [p.process, p.titleContains, p.domain].some((v) => v.trim() !== "");
 }

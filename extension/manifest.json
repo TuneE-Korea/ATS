@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "ATS 실시간 번역 미리보기",
+  "version": "0.1.0",
+  "description": "입력창에 한국어를 쓰면 ATS 앱으로 번역 미리보기를 띄우고 Tab으로 적용합니다.",
+  "permissions": ["storage"],
+  "host_permissions": ["http://127.0.0.1:47120/*"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "all_frames": true,
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options.html",
+  "action": { "default_title": "ATS 설정 열기", "default_icon": { "16": "icons/icon-16.png", "32": "icons/icon-32.png" } },
+  "icons": { "16": "icons/icon-16.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" }
+}

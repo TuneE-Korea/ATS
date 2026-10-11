@@ -14,7 +14,7 @@ pub enum TranslationMode {
     /// 단축키를 누르면 입력창 전체를 번역해서 치환한다.
     #[default]
     Hotkey,
-    /// 입력 중 미리보기를 띄운다. Phase 3에서 구현 예정.
+    /// 단축키에 더해, 브라우저 확장이 입력 중 번역 미리보기를 띄운다.
     Realtime,
 }
 
@@ -28,6 +28,8 @@ pub struct Settings {
     pub mode: TranslationMode,
     /// 한국어로 보이는 텍스트만 번역할지 여부 (이중 번역 방지).
     pub only_translate_korean: bool,
+    /// 브라우저 확장의 실시간 미리보기가 입력을 멈춘 뒤 기다리는 시간.
+    pub realtime_debounce_ms: u32,
     /// 공급자 시도 순서. 앞의 공급자가 한도 초과 등으로 실패하면 다음 공급자로 넘어간다.
     pub provider_order: Vec<ProviderId>,
     /// 앱/창별 목표 언어. 위에서부터 처음 일치하는 프로필을 쓴다.
@@ -45,6 +47,7 @@ impl Default for Settings {
             hotkey: "Ctrl+Alt+T".into(),
             mode: TranslationMode::Hotkey,
             only_translate_korean: true,
+            realtime_debounce_ms: 600,
             provider_order: vec![ProviderId::Deepl, ProviderId::Azure],
             profiles: Vec::new(),
             legacy_deepl_api_key: None,

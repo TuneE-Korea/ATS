@@ -35,6 +35,12 @@ impl AppState {
             log::info!("DeepL 키를 자격 증명 관리자로 이전했습니다");
         }
 
+        // 브라우저 확장 연결 토큰은 처음 실행할 때 한 번 만든다.
+        if secrets.pairing_token.is_empty() {
+            secrets.pairing_token = new_pairing_token();
+            secret_store.save(&secrets)?;
+        }
+
         Ok(Self { config: Mutex::new(Config { settings, secrets }), settings_path, secret_store })
     }
 
@@ -58,4 +64,8 @@ impl AppState {
         *self.config.lock().unwrap() = next;
         Ok(())
     }
+}
+
+pub fn new_pairing_token() -> String {
+    uuid::Uuid::new_v4().simple().to_string()
 }

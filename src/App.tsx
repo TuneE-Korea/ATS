@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ActivityLog, type LoggedEvent } from "./components/ActivityLog";
+import { BrowserSection } from "./components/BrowserSection";
 import { GeneralSection } from "./components/GeneralSection";
 import { ProfilesSection } from "./components/ProfilesSection";
 import { ProvidersSection } from "./components/ProvidersSection";
@@ -45,6 +46,7 @@ export default function App() {
       <GeneralSection />
       <ProvidersSection />
       <ProfilesSection />
+      <BrowserSection />
       <UsageMeter refreshKey={`${JSON.stringify(saved?.secrets)}-${log.length}`} />
       <TranslateTester />
       <ActivityLog items={log} />

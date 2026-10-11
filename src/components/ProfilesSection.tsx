@@ -14,8 +14,8 @@ export function ProfilesSection() {
   return (
     <Section title="앱·사이트별 번역 언어">
       <p className="text-xs text-zinc-500">
-        단축키를 누른 창이 조건에 맞으면 그 언어로 번역합니다. 위에서부터 처음 맞는 프로필을 씁니다. 브라우저는
-        사이트마다 프로세스가 같으니 "창 제목에 포함"으로 구분하세요 (예: reddit, 5ch).
+        번역하는 곳이 조건에 맞으면 그 언어로 번역합니다. 위에서부터 처음 맞는 프로필을 씁니다. 입력한 조건은 모두
+        맞아야 합니다. 브라우저 사이트는 "창 제목"(단축키·미리보기 모두) 또는 "도메인"(미리보기 전용)으로 구분하세요.
       </p>
 
       {profiles.map((p, i) => (
@@ -48,7 +48,7 @@ export function ProfilesSection() {
               ✕
             </button>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <input
               className={inputClass}
               value={p.process}
@@ -59,12 +59,18 @@ export function ProfilesSection() {
               className={inputClass}
               value={p.titleContains}
               onChange={(e) => updateProfile(i, { titleContains: e.target.value })}
-              placeholder="창 제목에 포함"
+              placeholder="창 제목에 포함 (reddit)"
+            />
+            <input
+              className={inputClass}
+              value={p.domain}
+              onChange={(e) => updateProfile(i, { domain: e.target.value })}
+              placeholder="도메인 (5ch.net)"
             />
             <LanguageSelect value={p.targetLang} onChange={(targetLang) => updateProfile(i, { targetLang })} />
           </div>
           {!hasCondition(p) && (
-            <p className="text-xs text-amber-600">프로세스나 창 제목 중 하나는 입력해야 적용됩니다.</p>
+            <p className="text-xs text-amber-600">프로세스, 창 제목, 도메인 중 하나는 입력해야 적용됩니다.</p>
           )}
         </div>
       ))}

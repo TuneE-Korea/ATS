@@ -1,7 +1,8 @@
 //! 앱/창별 목표 언어 프로필.
 //!
-//! 단축키를 누른 순간의 활성 창(프로세스 이름, 창 제목)으로 프로필을 고른다.
-//! 브라우저는 프로세스가 하나라서 사이트 구분은 창 제목(= 탭 제목)으로 한다.
+//! 번역 요청이 온 곳(활성 창의 프로세스·제목, 또는 브라우저 확장이 알려준 도메인)으로 프로필을 고른다.
+//! 단축키 번역은 도메인을 모르므로 브라우저 사이트는 창 제목(= 탭 제목)으로 구분하고,
+//! 확장의 실시간 미리보기는 도메인으로 정확히 구분할 수 있다.
 
 use serde::{Deserialize, Serialize};
 
@@ -14,16 +15,26 @@ pub struct Profile {
     pub process: String,
     /// 창 제목에 포함되어야 하는 문자열 (예: reddit). 비우면 검사하지 않는다.
     pub title_contains: String,
+    /// 사이트 도메인 (예: reddit.com). 하위 도메인도 포함한다. 브라우저 확장 요청에만 일치한다.
+    pub domain: String,
     pub target_lang: String,
     pub enabled: bool,
 }
 
-/// 단축키를 누른 순간의 활성 창 정보.
+/// 번역 요청이 온 곳. 단축키는 활성 창의 프로세스·제목을, 브라우저 확장은 제목·도메인을 채운다.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ActiveWindow {
     pub process: String,
     pub title: String,
+    pub domain: String,
+}
+
+/// `host`가 `domain`이거나 그 하위 도메인인지. "notreddit.com"이 "reddit.com"에 걸리지 않게 점 경계를 본다.
+fn domain_matches(host: &str, domain: &str) -> bool {
+    let host = host.trim_end_matches('.').to_ascii_lowercase();
+    let domain = domain.trim().trim_start_matches("*.").trim_start_matches('.').to_ascii_lowercase();
+    host == domain || host.ends_with(&format!(".{domain}"))
 }
 
 impl Profile {
@@ -32,12 +43,14 @@ impl Profile {
     pub fn matches(&self, window: &ActiveWindow) -> bool {
         let process = self.process.trim();
         let title = self.title_contains.trim();
-        if !self.enabled || (process.is_empty() && title.is_empty()) {
+        let domain = self.domain.trim();
+        if !self.enabled || (process.is_empty() && title.is_empty() && domain.is_empty()) {
             return false;
         }
         let process_ok = process.is_empty() || window.process.eq_ignore_ascii_case(process);
         let title_ok = title.is_empty() || window.title.to_lowercase().contains(&title.to_lowercase());
-        process_ok && title_ok
+        let domain_ok = domain.is_empty() || domain_matches(&window.domain, domain);
+        process_ok && title_ok && domain_ok
     }
 }
 
@@ -58,7 +71,11 @@ mod tests {
     use super::*;
 
     fn win(process: &str, title: &str) -> ActiveWindow {
-        ActiveWindow { process: process.into(), title: title.into() }
+        ActiveWindow { process: process.into(), title: title.into(), domain: String::new() }
+    }
+
+    fn browser(domain: &str, title: &str) -> ActiveWindow {
+        ActiveWindow { process: String::new(), title: title.into(), domain: domain.into() }
     }
 
     fn profile(name: &str, process: &str, title: &str, lang: &str) -> Profile {
@@ -68,7 +85,32 @@ mod tests {
             title_contains: title.into(),
             target_lang: lang.into(),
             enabled: true,
+            ..Profile::default()
         }
+    }
+
+    fn domain_profile(domain: &str, lang: &str) -> Profile {
+        Profile { name: domain.into(), domain: domain.into(), target_lang: lang.into(), enabled: true, ..Profile::default() }
+    }
+
+    #[test]
+    fn domain_matches_subdomains_on_dot_boundary() {
+        let p = domain_profile("reddit.com", "EN-US");
+        assert!(p.matches(&browser("reddit.com", "")));
+        assert!(p.matches(&browser("old.reddit.com", "")));
+        assert!(!p.matches(&browser("notreddit.com", "")));
+        assert!(domain_profile("*.5ch.net", "JA").matches(&browser("egg.5ch.net", "")));
+    }
+
+    #[test]
+    fn domain_profile_never_matches_hotkey_requests() {
+        assert!(!domain_profile("reddit.com", "EN-US").matches(&win("chrome.exe", "Reddit - Chrome")));
+    }
+
+    #[test]
+    fn title_profile_matches_browser_requests_too() {
+        let p = profile("Reddit", "", "reddit", "EN-US");
+        assert!(p.matches(&browser("www.reddit.com", "r/rust - Reddit")));
     }
 
     #[test]
