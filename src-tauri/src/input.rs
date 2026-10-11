@@ -69,6 +69,13 @@ pub fn copy_focused_text() -> InputResult<Option<String>> {
     Ok(clipboard.get_text().ok().filter(|t| !t.is_empty()))
 }
 
+/// 입력창 전체를 선택한다 (미리보기 적용 전).
+pub fn select_all() -> InputResult<()> {
+    let mut enigo = Enigo::new(&Settings::default()).map_err(err)?;
+    release_modifiers(&mut enigo)?;
+    ctrl_chord(&mut enigo, 'a')
+}
+
 /// 선택 영역(직전에 Ctrl+A 한 상태)을 `text`로 덮어쓴다.
 pub fn paste_text(text: &str) -> InputResult<()> {
     let mut enigo = Enigo::new(&Settings::default()).map_err(err)?;

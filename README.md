@@ -39,6 +39,17 @@
 - 브라우저에서는 탭의 **도메인**으로 프로필을 고를 수 있습니다 (`reddit.com`은 `old.reddit.com`도 포함).
 - 같은 문장은 앱이 캐시하지만, 실시간 모드는 단축키 모드보다 번역 글자 수를 많이 씁니다. 한도가 걱정되면 설정의 "대기 시간"을 늘리세요.
 
+## 데스크톱 앱 실시간 미리보기 (Phase 4, 실험)
+
+Discord·Slack 같은 데스크톱 앱에서도 입력을 멈추면 입력창 근처에 번역 미리보기가 뜹니다. **Tab** 적용, **Esc** 닫기.
+
+1. 설정 창 → 입력 방식 **단축키 + 실시간 미리보기** → **데스크톱 앱에서도 미리보기** 체크.
+2. "미리보기를 띄울 앱"에 실행 파일 이름을 적고 저장 (기본: `Discord.exe, slack.exe`).
+
+- 입력창 내용은 Windows UI Automation(화면 낭독기가 쓰는 접근성 API)으로 읽습니다. 비밀번호 칸은 읽지 않습니다.
+- 목록에 있는 앱이 앞에 있을 때만 동작합니다. 미리보기가 떠 있는 동안만 Tab·Esc를 가로채고, 닫히면 바로 놓아줍니다.
+- 적용은 단축키 번역과 같은 방식(전체 선택 → 붙여넣기 → 클립보드 원복)입니다.
+
 ## 번역 서비스와 자동 전환
 
 | 서비스 | 무료 한도 | 초과 시 |
@@ -96,6 +107,7 @@ crates/ats-core/     번역 코어 (Tauri 의존성 없음, Linux에서도 테�
   src/settings.rs      설정 로드/저장 (%APPDATA%\dev.tunee.ats\settings.json, 키 제외)
   src/server.rs        브라우저 확장용 로컬 HTTP 서버 (axum, 토큰·출처 검사)
   src/cache.rs         번역 결과 캐시 (실시간 미리보기 중복 요청 방지)
+  src/desktop.rs       데스크톱 미리보기 판단 (언제 번역·숨김·적용할지)과 위치 계산
 src-tauri/           데스크톱 앱 (OS 레벨 작업만)
   src/hotkey.rs        전역 단축키 등록
   src/input.rs         클립보드 백업/복원, 키 입력 시뮬레이션
@@ -104,8 +116,13 @@ src-tauri/           데스크톱 앱 (OS 레벨 작업만)
   src/pipeline.rs      단축키 → 복사 → 번역 → 붙여넣기 흐름
   src/commands.rs      설정 창에서 호출하는 커맨드
   src/tray.rs          트레이 아이콘과 메뉴
-  src/server.rs        로컬 서버 시작, 서버 요청 → 프로필 → 번역 연결
+  src/server.rs        로컬 서버 시작, 확장 요청을 번역기로 연결
+  src/translator.rs    미리보기 공통 번역 (프로필 → 목표 언어 → 캐시 → 공급자)
+  src/uia.rs           포커스된 입력창의 글·위치 읽기 (UI Automation)
+  src/desktop_preview.rs 데스크톱 미리보기 감시 스레드, Tab·Esc 처리
+  src/overlay.rs       포커스를 뺏지 않는 미리보기 창
 src/                 설정 창 (React + TS + Tailwind + Zustand)
+  preview/             데스크톱 미리보기 창 (preview.html)
 extension/           브라우저 확장 (MV3, esbuild)
   src/content.ts       입력 감지, 미리보기 표시, Tab 적용
   src/background.ts    로컬 서버와 통신 (토큰 보관)
@@ -132,6 +149,8 @@ npm run test:core           # Rust 번역 코어 테스트
 - **확장은 표시만, 번역은 앱이**: 키·프로필·캐시·공급자 전환은 모두 앱에 있고 확장은 HTTP 클라이언트일 뿐입니다. 그래서 단축키 번역과 브라우저 미리보기가 같은 설정을 씁니다.
 - **서버 요청은 서비스 워커에서**: content script의 요청은 페이지 출처로 나가서 서버가 거부합니다. 확장 출처로 나가는 서비스 워커를 거칩니다.
 - **입력창 쓰기는 Tab 때 한 번만**: React 입력창은 value setter + `input` 이벤트, 리치 에디터(contenteditable)는 전체 선택 + `insertText`로 써야 프레임워크 상태가 따라옵니다.
+- **판단은 코어, 읽기·그리기는 앱**: 데스크톱 미리보기는 "입력창 글이 이렇게 바뀌었다"만 코어의 `PreviewTracker`에 넘기고, 번역·숨김·적용 여부는 코어가 정합니다. 시각을 인자로 받아서 타이머 없이 테스트합니다.
+- **미리보기 창은 포커스를 받지 않음**: 포커스를 가져가면 사용자의 입력창에서 커서가 빠집니다. 그래서 `WS_EX_NOACTIVATE` 창을 `SWP_NOACTIVATE`로 띄우고, 키 입력은 전역 단축키로 받습니다.
 - **TLS는 OS 기본(SChannel)**: reqwest 기본값(rustls + aws-lc)은 Windows에서 추가 C 빌드 도구가 필요해서 `native-tls`를 씁니다.
 
 ## 로드맵
@@ -139,11 +158,12 @@ npm run test:core           # Rust 번역 코어 테스트
 - [x] Phase 1: 단축키 일괄 번역 (DeepL Free)
 - [x] Phase 2: 앱/사이트별 목표 언어, 공급자 폴백 (Azure Translator F0), API 키 자격 증명 관리자 보관
 - [x] Phase 3: 브라우저 확장 + 로컬 서버, 실시간 번역 미리보기
-- [ ] Phase 4 (실험): 데스크톱 앱 실시간 미리보기 (UI Automation)
+- [x] Phase 4 (실험): 데스크톱 앱 실시간 미리보기 (UI Automation)
 
 ## 알려진 한계
 
 - 단축키 번역의 사이트 구분은 창 제목 기준입니다. 도메인 프로필은 확장의 실시간 미리보기에서만 적용됩니다.
-- 실시간 미리보기는 브라우저 안에서만 동작합니다. Discord·Slack 데스크톱 앱은 단축키 번역을 쓰세요.
+- 데스크톱 미리보기는 앱이 접근성 정보를 얼마나 주느냐에 달려 있습니다. 글을 못 읽는 앱에서는 미리보기가 뜨지 않으니 단축키 번역을 쓰세요.
+- 미리보기가 떠 있는 동안에는 Tab이 들여쓰기·포커스 이동 대신 적용으로 쓰입니다.
 - 일부 앱은 `Ctrl+A`가 입력창이 아니라 화면 전체를 선택합니다. 그런 앱에서는 아직 동작하지 않을 수 있습니다.
 - 느린 앱에서 붙여넣기가 누락되면 `src-tauri/src/input.rs`의 `KEY_DELAY`, `PASTE_SETTLE`를 늘려 보세요.

@@ -9,6 +9,8 @@ const base: Config = {
     mode: "hotkey",
     onlyTranslateKorean: true,
     realtimeDebounceMs: 600,
+    desktopRealtime: false,
+    desktopRealtimeApps: ["Discord.exe", "slack.exe"],
     providerOrder: ["deepl", "azure"],
     profiles: [],
   },

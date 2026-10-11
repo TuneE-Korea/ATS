@@ -4,6 +4,7 @@
 //! `cargo test -p ats-core`로 검증할 수 있고, Phase 3의 로컬 서버도 이 크레이트를 재사용한다.
 
 pub mod cache;
+pub mod desktop;
 pub mod detect;
 pub mod profile;
 pub mod provider;

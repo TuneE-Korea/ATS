@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+/* 창 자체가 투명하므로 카드 바깥은 비워 둔다. */
+html,
+body {
+  background: transparent;
+  margin: 0;
+  overflow: hidden;
+}

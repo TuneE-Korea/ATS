@@ -3,13 +3,17 @@
 
 mod active_window;
 mod commands;
+mod desktop_preview;
 mod hotkey;
 mod input;
+mod overlay;
 mod pipeline;
 mod secret_store;
 mod server;
 mod state;
+mod translator;
 mod tray;
+mod uia;
 
 use state::AppState;
 use tauri::{Manager, WindowEvent};
@@ -21,6 +25,7 @@ pub fn run() {
             let state = AppState::load(app.handle())?;
             let hotkey = state.settings().hotkey;
             app.manage(state);
+            app.manage(translator::PreviewCache::default());
 
             if let Err(e) = hotkey::register(app.handle(), &hotkey) {
                 // 단축키 충돌이 있어도 앱은 떠야 설정 창에서 바꿀 수 있다.
@@ -28,6 +33,7 @@ pub fn run() {
             }
             tray::create(app.handle())?;
             server::start(app.handle());
+            desktop_preview::start(app.handle());
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -44,6 +50,7 @@ pub fn run() {
             commands::get_usage,
             commands::get_server_info,
             commands::regenerate_pairing_token,
+            commands::preview_layout,
         ])
         .run(tauri::generate_context!())
         .expect("ATS 실행 중 오류");

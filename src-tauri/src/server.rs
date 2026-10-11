@@ -1,10 +1,9 @@
 //! 브라우저 확장용 로컬 서버. 라우터와 인증은 `ats_core::server`에 있고, 여기서는 실제 번역만 구현한다.
 
-use crate::state::AppState;
+use crate::{state::AppState, translator};
 use ats_core::{
-    resolve_target,
     server::{self, BrowserTranslateRequest, BrowserTranslateResponse, ServerBackend, ServerStatus},
-    should_translate, ActiveWindow, TranslateRequest, TranslationCache, TranslationMode, TranslationProvider,
+    should_translate, ActiveWindow, TranslationMode,
 };
 use async_trait::async_trait;
 use serde::Serialize;
@@ -24,8 +23,6 @@ pub struct ServerInfoState(pub Mutex<ServerInfo>);
 
 struct Backend<R: Runtime> {
     app: AppHandle<R>,
-    /// 실시간 미리보기는 같은 문장을 반복해서 보내기 쉬워서 무료 한도를 아끼려고 캐시한다.
-    cache: Mutex<TranslationCache<BrowserTranslateResponse>>,
 }
 
 #[async_trait]
@@ -48,22 +45,7 @@ impl<R: Runtime> ServerBackend for Backend<R> {
         }
 
         let source = ActiveWindow { process: String::new(), title: req.title, domain: req.domain };
-        let (target_lang, profile) = resolve_target(&settings.profiles, &settings.target_lang, &source);
-        if let Some(hit) = self.cache.lock().unwrap().get(&req.text, target_lang) {
-            return Ok(Some(hit));
-        }
-
-        let provider = state.provider()?;
-        let request = TranslateRequest { text: req.text.clone(), source_lang: None, target_lang: target_lang.to_owned() };
-        let res = provider.translate(&request).await.map_err(|e| e.to_string())?;
-        let out = BrowserTranslateResponse {
-            text: res.text,
-            provider: res.provider,
-            target_lang: request.target_lang,
-            profile: profile.map(str::to_owned),
-        };
-        self.cache.lock().unwrap().insert(&req.text, &out.target_lang, out.clone());
-        Ok(Some(out))
+        translator::translate(&self.app, &req.text, &source).await.map(Some)
     }
 }
 
@@ -71,7 +53,7 @@ impl<R: Runtime> ServerBackend for Backend<R> {
 pub fn start<R: Runtime>(app: &AppHandle<R>) {
     let port = server::DEFAULT_PORT;
     app.manage(ServerInfoState(Mutex::new(ServerInfo { port, running: false, error: None })));
-    let backend = Arc::new(Backend { app: app.clone(), cache: Mutex::new(TranslationCache::new(300)) });
+    let backend = Arc::new(Backend { app: app.clone() });
     let app = app.clone();
 
     tauri::async_runtime::spawn(async move {

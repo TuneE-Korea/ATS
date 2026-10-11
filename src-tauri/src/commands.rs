@@ -8,6 +8,12 @@ use crate::{
 use ats_core::{TranslateRequest, TranslateResponse, TranslationProvider, Usage};
 use tauri::{AppHandle, State};
 
+/// 데스크톱 미리보기 창이 내용을 그린 뒤 높이(CSS 픽셀)를 알려준다.
+#[tauri::command]
+pub async fn preview_layout(app: AppHandle, height: f64) {
+    crate::desktop_preview::set_content_height(&app, height);
+}
+
 #[tauri::command]
 pub fn get_config(state: State<'_, AppState>) -> Config {
     state.config()
