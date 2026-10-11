@@ -20,6 +20,10 @@ use tauri::{Manager, WindowEvent};
 
 pub fn run() {
     tauri::Builder::default()
+        // 다른 플러그인보다 먼저 등록해야 두 번째 프로세스가 setup 전에 끝난다.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            tray::show_settings(app);
+        }))
         .plugin(hotkey::plugin())
         .setup(|app| {
             let state = AppState::load(app.handle())?;
