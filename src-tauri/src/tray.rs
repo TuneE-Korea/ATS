@@ -1,4 +1,5 @@
 use tauri::{
+    image::Image,
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Manager, Runtime,
@@ -9,7 +10,10 @@ pub fn create<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     let quit = MenuItem::with_id(app, "quit", "종료", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&open, &quit])?;
 
-    let mut builder = TrayIconBuilder::with_id("main")
+    // 앱 아이콘보다 말풍선을 키운 트레이 전용 이미지. 16px에서도 화살표가 보이게 했다 (원본: docs/icon.svg).
+    let icon = Image::from_bytes(include_bytes!("../icons/tray.png"))?;
+    TrayIconBuilder::with_id("main")
+        .icon(icon)
         .tooltip("ATS")
         .menu(&menu)
         .show_menu_on_left_click(false)
@@ -22,11 +26,8 @@ pub fn create<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
             if let TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } = event {
                 show_settings(tray.app_handle());
             }
-        });
-    if let Some(icon) = app.default_window_icon() {
-        builder = builder.icon(icon.clone());
-    }
-    builder.build(app)?;
+        })
+        .build(app)?;
     Ok(())
 }
 

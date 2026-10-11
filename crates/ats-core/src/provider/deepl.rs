@@ -1,6 +1,6 @@
 //! DeepL API 공급자. https://developers.deepl.com/docs/api-reference/translate
 
-use super::{ProviderError, TranslateRequest, TranslateResponse, TranslationProvider, Usage};
+use super::{ProviderError, ProviderId, TranslateRequest, TranslateResponse, TranslationProvider, Usage};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
@@ -83,13 +83,14 @@ fn parse_translate(raw: &str) -> Result<TranslateResponse, ProviderError> {
     Ok(TranslateResponse {
         text: first.text,
         detected_source_lang: first.detected_source_language,
+        provider: ProviderId::Deepl,
     })
 }
 
 #[async_trait]
 impl TranslationProvider for DeepL {
-    fn id(&self) -> &'static str {
-        "deepl"
+    fn id(&self) -> ProviderId {
+        ProviderId::Deepl
     }
 
     async fn translate(&self, req: &TranslateRequest) -> Result<TranslateResponse, ProviderError> {
@@ -125,7 +126,7 @@ impl TranslationProvider for DeepL {
             return Err(map_status(status, res.text().await?));
         }
         let u: UsageResult = res.json().await?;
-        Ok(Some(Usage { used: u.character_count, limit: u.character_limit }))
+        Ok(Some(Usage { provider: ProviderId::Deepl, used: u.character_count, limit: u.character_limit }))
     }
 }
 
@@ -153,7 +154,11 @@ mod tests {
         let raw = r#"{"translations":[{"detected_source_language":"KO","text":"Hello"}]}"#;
         assert_eq!(
             parse_translate(raw).unwrap(),
-            TranslateResponse { text: "Hello".into(), detected_source_lang: Some("KO".into()) }
+            TranslateResponse {
+                text: "Hello".into(),
+                detected_source_lang: Some("KO".into()),
+                provider: ProviderId::Deepl
+            }
         );
     }
 

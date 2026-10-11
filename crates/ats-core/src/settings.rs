@@ -1,5 +1,10 @@
 //! 사용자 설정. 앱 설정 폴더의 `settings.json`에 저장한다.
+//!
+//! API 키 같은 비밀값은 여기 두지 않는다 (`secrets.rs` 참고). 설정 파일은 평문이라
+//! 백업이나 공유 과정에서 키가 함께 새어 나갈 수 있기 때문이다.
 
+use crate::profile::Profile;
+use crate::provider::ProviderId;
 use serde::{Deserialize, Serialize};
 use std::{fs, io, path::Path};
 
@@ -16,25 +21,33 @@ pub enum TranslationMode {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Settings {
-    /// DeepL API 키. Free 키는 `:fx`로 끝난다.
-    pub deepl_api_key: String,
-    /// DeepL 목표 언어 코드 (EN-US, JA, ZH-HANS ...).
+    /// 어떤 프로필에도 해당하지 않을 때 쓰는 목표 언어 (DeepL 코드: EN-US, JA, ZH-HANS ...).
     pub target_lang: String,
     /// Tauri global-shortcut 형식의 단축키 문자열.
     pub hotkey: String,
     pub mode: TranslationMode,
     /// 한국어로 보이는 텍스트만 번역할지 여부 (이중 번역 방지).
     pub only_translate_korean: bool,
+    /// 공급자 시도 순서. 앞의 공급자가 한도 초과 등으로 실패하면 다음 공급자로 넘어간다.
+    pub provider_order: Vec<ProviderId>,
+    /// 앱/창별 목표 언어. 위에서부터 처음 일치하는 프로필을 쓴다.
+    pub profiles: Vec<Profile>,
+
+    /// Phase 1 설정 파일에 평문으로 저장되던 키. 읽기만 하고 다시 쓰지 않는다 (자격 증명 저장소로 이전).
+    #[serde(rename = "deeplApiKey", skip_serializing)]
+    pub legacy_deepl_api_key: Option<String>,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            deepl_api_key: String::new(),
             target_lang: "EN-US".into(),
             hotkey: "Ctrl+Alt+T".into(),
             mode: TranslationMode::Hotkey,
             only_translate_korean: true,
+            provider_order: vec![ProviderId::Deepl, ProviderId::Azure],
+            profiles: Vec::new(),
+            legacy_deepl_api_key: None,
         }
     }
 }
@@ -56,6 +69,11 @@ impl Settings {
         let raw = serde_json::to_string_pretty(self).map_err(io::Error::other)?;
         fs::write(path, raw)
     }
+
+    /// 예전 평문 키를 꺼낸다. 호출한 쪽이 비밀 저장소에 옮긴 뒤 `save`하면 파일에서 사라진다.
+    pub fn take_legacy_deepl_key(&mut self) -> Option<String> {
+        self.legacy_deepl_api_key.take().filter(|k| !k.trim().is_empty())
+    }
 }
 
 #[cfg(test)]
@@ -74,8 +92,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("nested/settings.json");
         let s = Settings {
-            deepl_api_key: "abc:fx".into(),
             target_lang: "JA".into(),
+            profiles: vec![Profile { name: "Discord".into(), process: "discord.exe".into(), ..Profile::default() }],
             ..Settings::default()
         };
         s.save(&path).unwrap();
@@ -90,5 +108,19 @@ mod tests {
         let s = Settings::load(&path).unwrap();
         assert_eq!(s.target_lang, "JA");
         assert_eq!(s.hotkey, "Ctrl+Alt+T");
+        assert_eq!(s.provider_order, vec![ProviderId::Deepl, ProviderId::Azure]);
+    }
+
+    #[test]
+    fn legacy_key_is_read_but_never_written_back() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        fs::write(&path, r#"{ "deeplApiKey": "old:fx", "targetLang": "JA" }"#).unwrap();
+
+        let mut s = Settings::load(&path).unwrap();
+        assert_eq!(s.take_legacy_deepl_key().as_deref(), Some("old:fx"));
+        s.save(&path).unwrap();
+
+        assert!(!fs::read_to_string(&path).unwrap().contains("old:fx"));
     }
 }
