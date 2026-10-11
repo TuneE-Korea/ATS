@@ -11,7 +11,7 @@ type Editable = HTMLInputElement | HTMLTextAreaElement | HTMLElement;
 
 const STATUS_TTL_MS = 10_000;
 
-let status: { value: ServerStatus | null; at: number } = { value: null, at: 0 };
+let serverStatus: { value: ServerStatus | null; at: number } = { value: null, at: 0 };
 let field: Editable | null = null;
 let timer: number | undefined;
 let seq = 0;
@@ -56,10 +56,10 @@ function send<T>(msg: Request): Promise<T> {
 }
 
 async function getStatus(): Promise<ServerStatus | null> {
-  if (Date.now() - status.at < STATUS_TTL_MS) return status.value;
+  if (Date.now() - serverStatus.at < STATUS_TTL_MS) return serverStatus.value;
   const res = await send<StatusResponse>({ type: "status" }).catch(() => null);
-  status = { value: res?.ok ? res.status : null, at: Date.now() };
-  return status.value;
+  serverStatus = { value: res?.ok ? res.status : null, at: Date.now() };
+  return serverStatus.value;
 }
 
 // ---------- 미리보기 UI (Shadow DOM으로 페이지 CSS와 격리) ----------
