@@ -8,10 +8,11 @@ const base: Config = {
     hotkey: "Ctrl+Alt+T",
     mode: "hotkey",
     onlyTranslateKorean: true,
+    realtimeDebounceMs: 600,
     providerOrder: ["deepl", "azure"],
     profiles: [],
   },
-  secrets: { deeplApiKey: "", azureKey: "", azureRegion: "" },
+  secrets: { deeplApiKey: "", azureKey: "", azureRegion: "", pairingToken: "t" },
 };
 
 describe("isDirty", () => {
@@ -31,8 +32,8 @@ describe("profile editing", () => {
 
   it("adds, updates, moves and removes profiles without touching saved", () => {
     const s = useConfig.getState();
-    s.addProfile({ name: "A", process: "a.exe", titleContains: "", targetLang: "JA", enabled: true });
-    s.addProfile({ name: "B", process: "b.exe", titleContains: "", targetLang: "DE", enabled: true });
+    s.addProfile({ name: "A", process: "a.exe", titleContains: "", domain: "", targetLang: "JA", enabled: true });
+    s.addProfile({ name: "B", process: "b.exe", titleContains: "", domain: "", targetLang: "DE", enabled: true });
     s.updateProfile(0, { targetLang: "FR" });
     s.moveProfile(1, -1);
 

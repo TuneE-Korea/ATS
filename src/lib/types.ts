@@ -10,6 +10,8 @@ export interface Profile {
   process: string;
   /** 창 제목에 포함될 문자열. 브라우저 사이트 구분용. */
   titleContains: string;
+  /** 사이트 도메인 (하위 도메인 포함). 브라우저 확장 요청에만 일치. */
+  domain: string;
   targetLang: string;
   enabled: boolean;
 }
@@ -19,6 +21,7 @@ export interface Settings {
   hotkey: string;
   mode: TranslationMode;
   onlyTranslateKorean: boolean;
+  realtimeDebounceMs: number;
   providerOrder: ProviderId[];
   profiles: Profile[];
 }
@@ -28,6 +31,8 @@ export interface Secrets {
   deeplApiKey: string;
   azureKey: string;
   azureRegion: string;
+  /** 브라우저 확장 연결 토큰. */
+  pairingToken: string;
 }
 
 export interface Config {
@@ -38,6 +43,13 @@ export interface Config {
 export interface ActiveWindow {
   process: string;
   title: string;
+  domain: string;
+}
+
+export interface ServerInfo {
+  port: number;
+  running: boolean;
+  error: string | null;
 }
 
 export interface TranslateResponse {

@@ -12,6 +12,8 @@ pub struct Secrets {
     pub azure_key: String,
     /// Azure 리소스 지역 (예: koreacentral). 글로벌 리소스면 비워 둔다.
     pub azure_region: String,
+    /// 브라우저 확장이 로컬 서버에 보내는 연결 토큰. 처음 실행할 때 만들어진다.
+    pub pairing_token: String,
 }
 
 pub trait SecretStore: Send + Sync {

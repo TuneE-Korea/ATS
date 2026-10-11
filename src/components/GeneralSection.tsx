@@ -24,11 +24,26 @@ export function GeneralSection() {
           onChange={(e) => edit({ mode: e.target.value as typeof settings.mode })}
         >
           <option value="hotkey">단축키로 일괄 번역</option>
-          <option value="realtime" disabled>
-            실시간 미리보기 (준비 중)
-          </option>
+          <option value="realtime">단축키 + 브라우저 실시간 미리보기</option>
         </select>
       </Field>
+
+      {settings.mode === "realtime" && (
+        <Field
+          label="미리보기 대기 시간 (ms)"
+          hint="입력을 멈추고 이만큼 지나면 번역합니다. 짧을수록 빠르지만 무료 한도를 더 씁니다."
+        >
+          <input
+            type="number"
+            min={300}
+            max={3000}
+            step={100}
+            className={inputClass}
+            value={settings.realtimeDebounceMs}
+            onChange={(e) => edit({ realtimeDebounceMs: Number(e.target.value) || 600 })}
+          />
+        </Field>
+      )}
 
       <label className="flex items-center gap-2 text-sm">
         <input

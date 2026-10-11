@@ -3,12 +3,15 @@
 //! Tauri(OS 입력 제어)와 분리된 순수 로직만 둔다. 그래서 Linux CI에서도
 //! `cargo test -p ats-core`로 검증할 수 있고, Phase 3의 로컬 서버도 이 크레이트를 재사용한다.
 
+pub mod cache;
 pub mod detect;
 pub mod profile;
 pub mod provider;
 pub mod secrets;
+pub mod server;
 pub mod settings;
 
+pub use cache::TranslationCache;
 pub use detect::should_translate;
 pub use profile::{resolve_target, ActiveWindow, Profile};
 pub use provider::{

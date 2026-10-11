@@ -37,7 +37,7 @@ pub fn current() -> ActiveWindow {
             CloseHandle(handle);
         }
 
-        ActiveWindow { process, title }
+        ActiveWindow { process, title, domain: String::new() }
     }
 }
 

@@ -7,6 +7,7 @@ mod hotkey;
 mod input;
 mod pipeline;
 mod secret_store;
+mod server;
 mod state;
 mod tray;
 
@@ -26,6 +27,7 @@ pub fn run() {
                 log::error!("단축키 등록 실패: {e}");
             }
             tray::create(app.handle())?;
+            server::start(app.handle());
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -40,6 +42,8 @@ pub fn run() {
             commands::save_config,
             commands::translate_text,
             commands::get_usage,
+            commands::get_server_info,
+            commands::regenerate_pairing_token,
         ])
         .run(tauri::generate_context!())
         .expect("ATS 실행 중 오류");

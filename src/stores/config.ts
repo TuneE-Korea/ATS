@@ -19,6 +19,7 @@ interface ConfigState {
   moveProfile: (index: number, dir: -1 | 1) => void;
   reset: () => void;
   save: () => Promise<boolean>;
+  regeneratePairingToken: () => Promise<void>;
 }
 
 export const useConfig = create<ConfigState>((set, get) => {
@@ -59,6 +60,20 @@ export const useConfig = create<ConfigState>((set, get) => {
     moveProfile: (index, dir) => setProfiles((ps) => move(ps, index, dir)),
 
     reset: () => set((s) => ({ draft: s.saved, error: null })),
+
+    // 토큰은 즉시 저장된다. 편집 중인 다른 값은 건드리지 않고 토큰만 바꿔 끼운다.
+    regeneratePairingToken: async () => {
+      try {
+        const next = await ipc.regeneratePairingToken();
+        const token = next.secrets.pairingToken;
+        set((s) => ({
+          saved: s.saved && { ...s.saved, secrets: { ...s.saved.secrets, pairingToken: token } },
+          draft: s.draft && { ...s.draft, secrets: { ...s.draft.secrets, pairingToken: token } },
+        }));
+      } catch (e) {
+        set({ error: errorMessage(e) });
+      }
+    },
 
     save: async () => {
       const { draft } = get();
