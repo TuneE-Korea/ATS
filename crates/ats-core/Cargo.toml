@@ -1,0 +1,17 @@
+[package]
+name = "ats-core"
+description = "Translation core for ATS: providers, language detection, settings. No Tauri dependency."
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+async-trait.workspace = true
+# Windows에서는 OS 기본 TLS(SChannel)를 쓴다. 기본값인 rustls+aws-lc는 C 빌드 도구(NASM 등)가 필요해 설치가 번거롭다.
+reqwest = { version = "0.13", default-features = false, features = ["json", "native-tls", "http2", "charset", "system-proxy"] }
+
+[dev-dependencies]
+tokio.workspace = true
+tempfile = "3"

@@ -1,0 +1,22 @@
+[package]
+name = "ats"
+description = "Auto Translate Server: 입력창 텍스트를 단축키로 번역"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "ats_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+ats-core = { path = "../crates/ats-core" }
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-global-shortcut = "2"
+enigo = "0.6"
+arboard = "3"
+serde.workspace = true
+serde_json.workspace = true
+log = "0.4"
