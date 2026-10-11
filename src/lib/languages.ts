@@ -1,4 +1,5 @@
-// DeepL target_lang 코드 중 자주 쓸 만한 것만. 전체 목록: https://developers.deepl.com/docs/getting-started/supported-languages
+// DeepL target_lang 코드 기준. Azure는 Rust 쪽에서 자기 형식으로 변환한다.
+// 전체 목록: https://developers.deepl.com/docs/getting-started/supported-languages
 export const TARGET_LANGUAGES = [
   { code: "EN-US", label: "영어 (미국)" },
   { code: "EN-GB", label: "영어 (영국)" },
@@ -11,3 +12,7 @@ export const TARGET_LANGUAGES = [
   { code: "PT-BR", label: "포르투갈어 (브라질)" },
   { code: "RU", label: "러시아어" },
 ] as const;
+
+export function languageLabel(code: string): string {
+  return TARGET_LANGUAGES.find((l) => l.code === code)?.label ?? code;
+}

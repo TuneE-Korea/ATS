@@ -1,13 +1,13 @@
 // Tauri 커맨드 호출을 한 곳에 모은다. 컴포넌트는 invoke 문자열을 직접 쓰지 않는다.
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import type { PipelineEvent, Settings, TranslateResponse, Usage } from "./types";
+import type { Config, PipelineEvent, TranslateResponse, Usage } from "./types";
 
 export const ipc = {
-  getSettings: () => invoke<Settings>("get_settings"),
-  saveSettings: (settings: Settings) => invoke<void>("save_settings", { settings }),
+  getConfig: () => invoke<Config>("get_config"),
+  saveConfig: (config: Config) => invoke<void>("save_config", { config }),
   translateText: (text: string) => invoke<TranslateResponse>("translate_text", { text }),
-  getUsage: () => invoke<Usage | null>("get_usage"),
+  getUsage: () => invoke<Usage[]>("get_usage"),
 };
 
 export function onPipelineEvent(handler: (e: PipelineEvent) => void): Promise<UnlistenFn> {

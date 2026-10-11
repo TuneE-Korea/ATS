@@ -1,10 +1,12 @@
 //! ATS 데스크톱 앱. OS 레벨 작업(전역 단축키, 클립보드, 키 입력)만 담당하고
 //! 번역 로직은 `ats-core`에 위임한다.
 
+mod active_window;
 mod commands;
 mod hotkey;
 mod input;
 mod pipeline;
+mod secret_store;
 mod state;
 mod tray;
 
@@ -34,8 +36,8 @@ pub fn run() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            commands::get_settings,
-            commands::save_settings,
+            commands::get_config,
+            commands::save_config,
             commands::translate_text,
             commands::get_usage,
         ])

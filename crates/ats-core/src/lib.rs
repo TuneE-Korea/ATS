@@ -4,11 +4,15 @@
 //! `cargo test -p ats-core`로 검증할 수 있고, Phase 3의 로컬 서버도 이 크레이트를 재사용한다.
 
 pub mod detect;
+pub mod profile;
 pub mod provider;
+pub mod secrets;
 pub mod settings;
 
 pub use detect::should_translate;
+pub use profile::{resolve_target, ActiveWindow, Profile};
 pub use provider::{
-    build_provider, ProviderError, TranslateRequest, TranslateResponse, TranslationProvider, Usage,
+    build_provider, ProviderError, ProviderId, TranslateRequest, TranslateResponse, TranslationProvider, Usage,
 };
+pub use secrets::{MemorySecretStore, SecretStore, Secrets};
 pub use settings::{Settings, TranslationMode};
