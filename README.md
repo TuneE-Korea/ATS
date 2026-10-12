@@ -1,4 +1,4 @@
-# ATS (Auto Translate Server)
+# ATS (Auto Translate Sidekick)
 
 입력창에 한국어로 쓴 글을 단축키 한 번으로 번역해서 바꿔 주는 Windows 트레이 앱입니다.
 브라우저, Discord, Slack 등 텍스트를 입력할 수 있는 곳이면 어디서나 동작합니다.

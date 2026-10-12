@@ -1,6 +1,6 @@
 [package]
 name = "ats"
-description = "Auto Translate Server: 입력창 텍스트를 단축키로 번역"
+description = "Auto Translate Sidekick: 입력창 텍스트를 단축키로 번역"
 version.workspace = true
 edition.workspace = true
 
